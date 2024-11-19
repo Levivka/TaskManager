@@ -13,9 +13,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -23,6 +25,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
     private final UserServices userServices;
+    private final JwtRequestFilter jwtRequestFilter;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -47,14 +50,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/task").hasAnyRole("ADMIN", "EMPLOYEE")
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/user/**").hasRole("ADMIN")
+                        .requestMatchers("/api/task/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers("/api/auth/create").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-                .authenticationProvider(authenticationProvider());
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+//        System.out.println("User authenticated: " + SecurityContextHolder.getContext().getAuthentication());
 
         return http.build();
     }

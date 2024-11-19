@@ -31,12 +31,13 @@ public class JwtTokenUtil {
 
     public String generateToken(UserDetails user) {
         Map<String, Object> payload = new HashMap<>();
-        payload.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
         payload.put("username", user.getUsername());
+        payload.put("roles", user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList());
 
         Date creationDate = new Date();
         Date expirationDate = new Date(creationDate.getTime() + jwtLifetime.toMillis());
-
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .setClaims(payload)
@@ -47,14 +48,27 @@ public class JwtTokenUtil {
     }
 
     public String getUsername(String token) {
-        return parseToken(token).getSubject();
+//        System.out.println("Username: " + parseToken(token).get("username", String.class));
+        return parseToken(token).get("username", String.class);
     }
 
-    public List getRoles(String token) {
+    public List<String> getRoles(String token) {
+//        parseToken(token).get("roles", List.class).stream().forEach(System.out::println);
         return parseToken(token).get("roles", List.class);
     }
 
     public Claims parseToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+//            System.out.println("Parsed token claims: " + claims);
+            return claims;
+        } catch (Exception e) {
+            System.out.println("Error parsing token: " + e.getMessage());
+            throw e;
+        }
     }
 }
