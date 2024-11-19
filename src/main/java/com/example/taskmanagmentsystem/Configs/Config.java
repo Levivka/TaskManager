@@ -1,4 +1,4 @@
-package Services;
+package com.example.taskmanagmentsystem.Configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

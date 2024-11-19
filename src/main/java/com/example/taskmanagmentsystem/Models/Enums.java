@@ -1,11 +1,8 @@
-package Models;
+package com.example.taskmanagmentsystem.Models;
 
 import java.util.Arrays;
 
 public class Enums {
-    public enum Role {
-        ADMIN, EMPLOYEE, VIEWER
-    }
 
     public enum Status {
         SENT, PENDING, COMPLETE
