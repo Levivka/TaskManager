@@ -37,10 +37,10 @@ public class UserServices implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = findByUsername(username).orElseThrow(() ->
             new UsernameNotFoundException(
-                String.format("Пользователь с почтой %s не найден", username)
+                String.format("Пользователь с именем %s не найден", username)
             )
         );
-        System.out.println("Загружен пользователь " + user.getName());
+//        System.out.println("Загружен пользователь " + user.getName());
         return new org.springframework.security.core.userdetails.User(
             user.getName(),
             user.getPassword(),
@@ -55,9 +55,13 @@ public class UserServices implements UserDetailsService {
         user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
         user.setEmail(userDto.getEmail());
         user.setRoles(List.of(roleServices.getUserRole()));
-        System.out.println("Created user " + user);
+//        System.out.println("Created user " + user);
 
         userRepository.save(user);
         return ResponseEntity.ok(user);
     }
+
+//    public ResponseEntity<?> makeAdmin(UserDto userDto) {
+//
+//    }
 }

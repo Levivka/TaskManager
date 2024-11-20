@@ -32,6 +32,10 @@ public class UserController {
         return ResponseEntity.ok("Hello Admin!");
     }
 
+//    @PostMapping("/makeAdmin")
+//    public ResponseEntity<String> makeAdmin() {
+//
+//    }
 
 
 }

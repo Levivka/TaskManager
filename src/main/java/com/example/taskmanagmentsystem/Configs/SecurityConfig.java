@@ -50,6 +50,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/task/**").hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers("/api/auth/token").permitAll()
                         .requestMatchers("/api/auth/registration").permitAll()
+                        .requestMatchers("/api/task/create").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers("/api/task/list").hasAnyRole("ADMIN", "EMPLOYEE")
                         .anyRequest().authenticated()
                 )
                 .cors(AbstractHttpConfigurer::disable)
