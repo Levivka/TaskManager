@@ -1,19 +1,20 @@
 package com.example.taskmanagmentsystem.Services.Users;
 
-import com.example.taskmanagmentsystem.Models.Role;
+import com.example.taskmanagmentsystem.Models.Dtos.UserDto;
 import com.example.taskmanagmentsystem.Models.User;
-import com.example.taskmanagmentsystem.Repositories.RoleRepository;
 import com.example.taskmanagmentsystem.Repositories.UserRepository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.taskmanagmentsystem.Services.RoleServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserServices implements UserDetailsService {
 
-    private final RoleRepository roleRepository;
+    private final RoleServices roleServices;
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public Optional<User> findByUsername(String username) {
-        System.out.println("Looking for user with name: " + username);
+//        System.out.println("Looking for user with name: " + username);
         return userRepository.findByName(username);
     }
 
@@ -37,6 +39,7 @@ public class UserServices implements UserDetailsService {
                 String.format("Пользователь с почтой %s не найден", username)
             )
         );
+        System.out.println("Загружен пользователь " + user.getName());
         return new org.springframework.security.core.userdetails.User(
             user.getName(),
             user.getPassword(),
@@ -44,12 +47,15 @@ public class UserServices implements UserDetailsService {
         );
     }
 
-    public Optional<Role> findByName(String name) {
-        return roleRepository.findByName(name);
-    }
+    public void createUser(UserDto userDto) {
 
-    public void createUser(User user) {
-        user.setRoles(List.of(roleRepository.findByName("ROLE_USER").get()));
+        User user = new User();
+        user.setName(userDto.getName());
+        user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+        user.setEmail(userDto.getEmail());
+        user.setRoles(List.of(roleServices.getUserRole()));
+        System.out.println("Created user " + user);
+
         userRepository.save(user);
     }
 }

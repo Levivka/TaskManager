@@ -1,4 +1,4 @@
-package com.example.taskmanagmentsystem.Services.Users;
+package com.example.taskmanagmentsystem.Services.Tasks;
 
 import com.example.taskmanagmentsystem.Models.Task;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -26,11 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final UserServices userServices;
     private final JwtRequestFilter jwtRequestFilter;
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
@@ -41,7 +37,7 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setPasswordEncoder(bCryptPasswordEncoder);
         authenticationProvider.setUserDetailsService(userServices);
         return authenticationProvider;
     }
@@ -52,7 +48,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers("/api/task/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                        .requestMatchers("/api/auth/create").permitAll()
+                        .requestMatchers("/api/auth/token").permitAll()
+                        .requestMatchers("/api/auth/registration").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(AbstractHttpConfigurer::disable)
