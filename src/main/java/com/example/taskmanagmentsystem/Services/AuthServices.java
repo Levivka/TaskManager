@@ -47,7 +47,7 @@ public class AuthServices {
                     HttpStatus.BAD_REQUEST
             );
         }
-        userServices.createUser(userDto);
-        return ResponseEntity.ok().body(userDto);
+
+        return userServices.createUser(userDto);
     }
 }

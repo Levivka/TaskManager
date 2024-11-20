@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.example.taskmanagmentsystem.Services.RoleServices;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -47,7 +48,7 @@ public class UserServices implements UserDetailsService {
         );
     }
 
-    public void createUser(UserDto userDto) {
+    public ResponseEntity<User> createUser(UserDto userDto) {
 
         User user = new User();
         user.setName(userDto.getName());
@@ -57,5 +58,6 @@ public class UserServices implements UserDetailsService {
         System.out.println("Created user " + user);
 
         userRepository.save(user);
+        return ResponseEntity.ok(user);
     }
 }
