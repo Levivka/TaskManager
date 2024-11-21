@@ -23,19 +23,4 @@ public class UserController {
     private final UserServices userServices;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/hi")
-    public ResponseEntity<String> adminOnly() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("User: " + auth.getName());
-        System.out.println("Roles: " + auth.getAuthorities());
-        return ResponseEntity.ok("Hello Admin!");
-    }
-
-//    @PostMapping("/makeAdmin")
-//    public ResponseEntity<String> makeAdmin() {
-//
-//    }
-
-
 }

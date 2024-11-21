@@ -6,6 +6,7 @@ import com.example.taskmanagmentsystem.Models.Task;
 import com.example.taskmanagmentsystem.Models.User;
 import com.example.taskmanagmentsystem.Repositories.TaskRepository;
 import com.example.taskmanagmentsystem.Repositories.UserRepository;
+import com.example.taskmanagmentsystem.Services.AuthServices;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,14 @@ import java.util.Optional;
 public class TaskServices {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final AuthServices authServices;
 
     public ResponseEntity<?> listAllTasks() {
         List<Task> tasks = new ArrayList<>();
         taskRepository.findAll().forEach(tasks::add);
+        if (tasks.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Список задач пуст");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 
@@ -49,7 +54,6 @@ public class TaskServices {
     public ResponseEntity<?> createTask(TaskDto taskDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-
         Optional<User> authorOptional = userRepository.findByName(currentUsername);
 
         if (authorOptional.isEmpty()) {
@@ -72,6 +76,52 @@ public class TaskServices {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskRepository.save(task));
     }
 
+    public ResponseEntity<?> updateTask(Integer taskId, TaskDto taskDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        User currentUser = userRepository.findByName(currentUsername)
+                .orElse(null);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Пользователь не авторизован.");
+        }
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Задача с ID " + taskId + " не найдена."));
+
+        authServices.validateAccess(currentUser, task);
+
+        if (authServices.isAdmin(currentUser)) {
+            updateTaskForAdmin(task, taskDto);
+        } else {
+            updateTaskForUser(task, taskDto);
+        }
+
+        taskRepository.save(task);
+        return ResponseEntity.ok("Задача успешно обновлена.");
+    }
+
+    public void updateTaskForUser(Task task, TaskDto taskDto) {
+        if (taskDto.getExecutorId() != null) {
+            User executor = userRepository.findById(taskDto.getExecutorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Исполнитель с ID " + taskDto.getExecutorId() + " не найден."));
+            task.setExecutor(executor);
+        }
+        if (taskDto.getComments() != null && !taskDto.getComments().isEmpty()) {
+            task.setComments(taskDto.getComments());
+        }
+    }
+
+    public void updateTaskForAdmin(Task task, TaskDto taskDto) {
+        BeanUtils.copyProperties(taskDto, task, getNullPropertyNames(taskDto));
+        if (taskDto.getExecutorId() != null) {
+            User executor = userRepository.findById(taskDto.getExecutorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Исполнитель с ID " + taskDto.getExecutorId() + " не найден."));
+            task.setExecutor(executor);
+        }
+    }
+
     private String[] getNullPropertyNames(Object source) {
         final BeanWrapper src = new BeanWrapperImpl(source);
         return Arrays.stream(src.getPropertyDescriptors())
@@ -79,42 +129,6 @@ public class TaskServices {
                 .filter(name -> src.getPropertyValue(name) == null)
                 .toArray(String[]::new);
     }
-
-    public ResponseEntity<?> updateTask(Integer taskId, TaskDto taskDto) {
-        if (taskRepository.existsById(taskId)) {
-            Task origin = taskRepository.findById(taskId).orElse(null);
-
-            if (origin == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Задача с таким ID не найдена");
-            }
-
-            BeanUtils.copyProperties(taskDto, origin, getNullPropertyNames(taskDto));
-
-            if (taskDto.getExecutorId() != null) {
-                User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
-                if (executor == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Исполнитель с таким ID не найден");
-                }
-                origin.setExecutor(executor);
-            }
-
-            if (origin.getAuthor() == null) {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                User author = userRepository.findByName(username).orElse(null);
-                if (author == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Автор с таким именем не найден");
-                }
-                origin.setAuthor(author);
-            }
-
-            Task updatedTask = taskRepository.save(origin);
-
-            return ResponseEntity.status(HttpStatus.OK).body(updatedTask);
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Задачи с таким ID нету");
-        }
-    }
-
 
     public ResponseEntity<?> deleteTask(Integer taskId) {
         if (taskRepository.existsById(taskId)) {

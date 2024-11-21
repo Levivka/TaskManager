@@ -4,6 +4,8 @@ import com.example.taskmanagmentsystem.Models.Dtos.JwtRequest;
 import com.example.taskmanagmentsystem.Models.Dtos.JwtResponse;
 import com.example.taskmanagmentsystem.Models.Dtos.UserDto;
 import com.example.taskmanagmentsystem.Models.Exceptions.ApplicationError;
+import com.example.taskmanagmentsystem.Models.Task;
+import com.example.taskmanagmentsystem.Models.User;
 import com.example.taskmanagmentsystem.Services.Users.UserServices;
 import com.example.taskmanagmentsystem.Utils.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +31,7 @@ public class AuthServices {
 //        System.out.println("Received Password: " + authRequest.getPassword());
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
-        }
-        catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return new ResponseEntity<>(new ApplicationError(HttpStatus.UNAUTHORIZED.value(), "Неверный логин или пароль"), HttpStatus.UNAUTHORIZED);
         }
 
@@ -49,5 +50,20 @@ public class AuthServices {
         }
 
         return userServices.createUser(userDto);
+    }
+    public boolean isAdmin(User user) {
+        return user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
+    }
+
+    public boolean isExecutor(User user, Task task) {
+        return task.getExecutor() != null && task.getExecutor().getId().equals(user.getId());
+    }
+
+    public ResponseEntity<String> validateAccess(User user, Task task) {
+        if (!isAdmin(user) && !isExecutor(user, task)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("У вас нет прав на выполнение этого действия.");
+        }
+        return null;
     }
 }
