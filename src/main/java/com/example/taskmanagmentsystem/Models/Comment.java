@@ -1,8 +1,12 @@
 package com.example.taskmanagmentsystem.Models;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
+import java.util.List;
 
 @Entity
+@Data
 @Table(name = "comments")
 public class Comment {
     @Id
@@ -13,11 +17,17 @@ public class Comment {
     @Column(name = "content", nullable = false)
     private String content;
 
-    @ManyToOne
-    @JoinColumn(name = "task_id", nullable = false)
-    private Task task;
+    @ManyToMany()
+    @JoinTable(
+            name = "task_comments",
+            joinColumns = @JoinColumn(name = "comment_id"),
+            inverseJoinColumns = @JoinColumn(name = "task_id")
+    )
+    private List<Task> taskRelation;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
+    @Column(name = "task_id", nullable = false)
+    private int task;
+
+    @Column(name = "author_id", nullable = false)
+    private int author;
 }
