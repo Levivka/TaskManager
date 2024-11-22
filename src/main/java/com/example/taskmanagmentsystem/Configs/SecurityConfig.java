@@ -45,13 +45,16 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger/swagger-ui.html", "/swagger/swagger-ui/**", "/openapi.yaml")
+                        .permitAll()
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
                         .requestMatchers("/api/task/**").hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers("/api/auth/token").permitAll()
                         .requestMatchers("/api/auth/registration").permitAll()
                         .requestMatchers("/api/task/create").hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers("/api/task/list").hasAnyRole("ADMIN", "EMPLOYEE")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()  // Остальные запросы требуют аутентификации
                 )
                 .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
@@ -59,9 +62,8 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-//        System.out.println("User authenticated: " + SecurityContextHolder.getContext().getAuthentication());
-
         return http.build();
     }
+
 }
 

@@ -1,0 +1,629 @@
+openapi: "3.0.1"
+info:
+  title: "Task Management System API"
+  description: "API для системы управления задачами с системой ролей, возможностью оставлять комментарии, сменой статуса и важности задач."
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8084
+    description: Локальный сервер
+
+tags:
+  - name: Authentication
+    description: Операции регистрации и получения JWT токена
+  - name: Tasks
+    description: Операции с задачами
+  - name: Users
+    description: Операции с пользователями
+  - name: Comments
+    description: Операции с комментариями
+
+paths:
+  /api/tasks/{taskId}/comments/list:
+    get:
+      tags:
+        - Comments
+      summary: Получение списка комментариев
+      description: Получение списка комментариев для конкретной задачи
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+      responses:
+        '200':
+          description: Успешное получение списка комментариев
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '204':
+          description: Список комментариев пуст
+        '400':
+          description: Задача не найдена
+
+  /api/tasks/{taskId}/comments/create:
+    post:
+      tags:
+        - Comments
+      summary: Создание комментария
+      description: Создание нового комментария к задаче
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentDto'
+            example:
+              content: "Текст комментария"
+      responses:
+        '201':
+          description: Комментарий успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          description: Задача или пользователь не найдены
+        '401':
+          description: Пользователь не авторизован
+
+  /api/tasks/{taskId}/comments/{id}/update:
+    post:
+      tags:
+        - Comments
+      summary: Обновление комментария
+      description: Обновление существующего комментария к задаче
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID комментария
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentDto'
+            example:
+              content: "Обновленный текст комментария"
+      responses:
+        '200':
+          description: Комментарий успешно обновлен
+        '400':
+          description: Задача или комментарий не найдены
+        '401':
+          description: Пользователь не авторизован
+
+  /api/tasks/{taskId}/comments/{id}/delete:
+    get:
+      tags:
+        - Comments
+      summary: Удаление комментария
+      description: Удаление существующего комментария к задаче
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID комментария
+      responses:
+        '200':
+          description: Комментарий успешно удален
+        '400':
+          description: Задача или комментарий не найдены
+        '401':
+          description: Пользователь не авторизован
+  /api/auth/token:
+    post:
+      tags:
+        - Authentication
+      summary: Получение JWT токена
+      description: Получение JWT токена по имени и паролю пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JwtRequest'
+            example:
+              username: "user"
+              password: "password"
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+        '401':
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationError'
+              example:
+                status: 401
+                message: "Неверный логин или пароль"
+
+  /api/auth/registration:
+    post:
+      tags:
+        - Authentication
+      summary: Регистрация нового пользователя
+      description: Создаёт пользователя, в БД записывается хешированный пароль
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+            example:
+              name: "newuser"
+              password: "password123"
+              email: "user@example.com"
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Пользователь с таким именем уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationError'
+              example:
+                status: 400
+                message: "Пользователь с таким именем уже существует"
+  /api/tasks/create:
+    post:
+      tags:
+        - Tasks
+      summary: Создание новой задачи
+      description: Создание новой задачи авторизованным пользователем
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskDto'
+            example:
+              title: "Новая задача"
+              description: "Описание задачи"
+              status: "SENT"
+              priority: "NORMAL"
+              executorId: 1
+      responses:
+        '201':
+          description: Задача успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Автор не найден
+        '401':
+          description: Пользователь не авторизован
+
+  /api/tasks/list:
+    get:
+      tags:
+        - Tasks
+      summary: Получение списка всех задач
+      description: Получение полного списка задач в системе
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешное получение списка задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '204':
+          description: Список задач пуст
+
+  /api/tasks/list/executor/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Получение задач исполнителя
+      description: Получение списка задач, назначенных конкретному исполнителю
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID исполнителя
+      responses:
+        '200':
+          description: Успешное получение списка задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '204':
+          description: Список задач пуст
+
+  /api/tasks/list/author/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Получение задач автора
+      description: Получение списка задач по автору задачи
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID автора
+      responses:
+        '200':
+          description: Успешное получение списка задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '204':
+          description: Список задач пуст
+
+  /api/tasks/{id}/update:
+    post:
+      tags:
+        - Tasks
+      summary: Обновление задачи
+      description: Обновление существующей задачи, в теле запроса передаются параметры которые нужно изменить, все незаполненные поля остаются неизменными
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskDto'
+      responses:
+        '200':
+          description: Задача успешно обновлена
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: У вас нет прав на выполнение этого действия
+          content:
+            application/json:
+              schema:
+                type: string
+              example: "У вас нет прав на выполнение этого действия."
+        '404':
+          description: Задача не найдена
+
+  /api/tasks/{id}/delete:
+    post:
+      tags:
+        - Tasks
+      summary: Удаление задачи
+      description: Удаление существующей задачи
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID задачи
+      responses:
+        '200':
+          description: Задача успешно удалена
+        '400':
+          description: Задача не найдена
+        '401':
+          description: Пользователь не авторизован
+
+  /api/users/{id}/delete:
+    delete:
+      tags:
+        - Users
+      summary: Удаление пользователя
+      description: Удаление существующего пользователя (только для администраторов)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя
+      responses:
+        '200':
+          description: Пользователь успешно удалён
+        '404':
+          description: Пользователь не найден
+        '403':
+          description: Недостаточно прав
+
+  /api/users/{id}/make-admin:
+    put:
+      tags:
+        - Users
+      summary: Назначение пользователя администратором
+      description: Присвоение пользователю роли администратора (только для администраторов)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя
+      responses:
+        '200':
+          description: Пользователь успешно назначен администратором
+        '400':
+          description: Пользователь уже является администратором
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Пользователь не найден
+
+components:
+  schemas:
+    JwtRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Имя пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+      required:
+        - username
+        - password
+
+    JwtResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT токен
+      required:
+        - token
+
+    ApplicationError:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: HTTP статус ошибки
+        message:
+          type: string
+          description: Описание ошибки
+      required:
+        - status
+        - message
+
+    UserDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Имя пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+      required:
+        - name
+        - password
+        - email
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор пользователя
+        name:
+          type: string
+          description: Имя пользователя
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          description: Роли пользователя
+      required:
+        - id
+        - name
+        - email
+        - roles
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор роли
+        name:
+          type: string
+          enum: [ROLE_ADMIN, ROLE_EMPLOYEE, ROLE_VIEWER]
+          description: Название роли
+      required:
+        - id
+        - name
+
+    TaskDto:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Заголовок задачи
+        description:
+          type: string
+          description: Описание задачи
+        status:
+          type: string
+          enum: [SENT, PENDING, COMPLETE]
+          description: Статус задачи
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH]
+          description: Приоритет задачи
+        executorId:
+          type: integer
+          description: ID исполнителя задачи
+      required:
+        - title
+        - description
+        - status
+        - priority
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор задачи
+        title:
+          type: string
+          description: Заголовок задачи
+        description:
+          type: string
+          description: Описание задачи
+        status:
+          type: string
+          enum: [SENT, PENDING, COMPLETE]
+          description: Статус задачи
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH]
+          description: Приоритет задачи
+        author:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/User'
+          description: Автор задачи
+        executor:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/User'
+          description: Исполнитель задачи
+      required:
+        - id
+        - title
+        - description
+        - status
+        - priority
+        - author
+    CommentDto:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Содержание комментария
+      required:
+        - content
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор комментария
+        content:
+          type: string
+          description: Содержание комментария
+        author:
+          type: integer
+          format: int32
+          description: ID автора комментария
+        task:
+          type: integer
+          format: int32
+          description: ID задачи, к которой относится комментарий
+        taskRelation:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          description: Cписок для связной таблицы
+      required:
+        - id
+        - content
+        - author
+        - task
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+
+security:
+  - bearerAuth: []

@@ -40,11 +40,13 @@ public class TaskService {
 
     public ResponseEntity<?> userTasks(Integer executorId) {
         List<Task> tasks = new ArrayList<>(taskRepository.findByExecutor_Id(executorId));
+        if (tasks.isEmpty()) return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Список задач пуст");
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 
     public ResponseEntity<?> userTasks(int authorId) {
         List<Task> tasks = new ArrayList<>(taskRepository.findByAuthor_Id(authorId));
+        if (tasks.isEmpty()) return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Список задач пуст");
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 
