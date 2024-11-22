@@ -1,26 +1,23 @@
 package com.example.taskmanagmentsystem.Controllers;
 
-import com.example.taskmanagmentsystem.Models.Dtos.UserDto;
-import com.example.taskmanagmentsystem.Models.Exceptions.ApplicationError;
-import com.example.taskmanagmentsystem.Models.User;
-import com.example.taskmanagmentsystem.Services.Users.UserServices;
+import com.example.taskmanagmentsystem.Services.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
-    private final UserServices userServices;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final UserService userService;
 
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<?> deleteUser(@PathVariable int id) {
+        return userService.deleteUser(id);
+    }
+
+    @PutMapping("/{id}/make-admin")
+    public ResponseEntity<?> makeUserAdmin(@PathVariable int id) {
+        return userService.makeUserAdmin(id);
+    }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CommentServices {
+public class CommentService {
 
     private final CommentRepository commentRepository;
     private final TaskRepository taskRepository;

@@ -1,13 +1,10 @@
-package com.example.taskmanagmentsystem.Services.Tasks;
+package com.example.taskmanagmentsystem.Services;
 
 import com.example.taskmanagmentsystem.Models.Dtos.TaskDto;
-import com.example.taskmanagmentsystem.Models.Exceptions.ApplicationError;
 import com.example.taskmanagmentsystem.Models.Task;
 import com.example.taskmanagmentsystem.Models.User;
 import com.example.taskmanagmentsystem.Repositories.TaskRepository;
 import com.example.taskmanagmentsystem.Repositories.UserRepository;
-import com.example.taskmanagmentsystem.Services.AuthServices;
-import jakarta.persistence.Entity;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -27,10 +24,10 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class TaskServices {
+public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-    private final AuthServices authServices;
+    private final AuthService authService;
 
     public ResponseEntity<?> listAllTasks() {
         List<Task> tasks = new ArrayList<>();
@@ -90,9 +87,9 @@ public class TaskServices {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Задача с ID " + taskId + " не найдена."));
 
-        authServices.validateAccess(currentUser, task);
+        authService.validateAccess(currentUser, task);
 
-        if (authServices.isAdmin(currentUser)) {
+        if (authService.isAdmin(currentUser)) {
             updateTaskForAdmin(task, taskDto);
         } else {
             updateTaskForUser(task, taskDto);

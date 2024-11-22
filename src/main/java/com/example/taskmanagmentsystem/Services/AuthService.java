@@ -6,7 +6,6 @@ import com.example.taskmanagmentsystem.Models.Dtos.UserDto;
 import com.example.taskmanagmentsystem.Models.Exceptions.ApplicationError;
 import com.example.taskmanagmentsystem.Models.Task;
 import com.example.taskmanagmentsystem.Models.User;
-import com.example.taskmanagmentsystem.Services.Users.UserServices;
 import com.example.taskmanagmentsystem.Utils.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,13 +15,12 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServices {
-    private final UserServices userServices;
+public class AuthService {
+    private final UserService userService;
     private final JwtTokenUtil jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
 
@@ -35,13 +33,13 @@ public class AuthServices {
             return new ResponseEntity<>(new ApplicationError(HttpStatus.UNAUTHORIZED.value(), "Неверный логин или пароль"), HttpStatus.UNAUTHORIZED);
         }
 
-        UserDetails userDetails = userServices.loadUserByUsername(authRequest.getUsername());
+        UserDetails userDetails = userService.loadUserByUsername(authRequest.getUsername());
         String token = jwtTokenUtil.generateToken(userDetails);
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
     public ResponseEntity<?> registration(@RequestBody UserDto userDto) {
-        if (userServices.findByUsername(userDto.getName()).isPresent()) {
+        if (userService.findByUsername(userDto.getName()).isPresent()) {
             return new ResponseEntity<>(new ApplicationError(
                     HttpStatus.BAD_REQUEST.value(),
                     "Пользователь с таким именем уже существует"),
@@ -49,7 +47,7 @@ public class AuthServices {
             );
         }
 
-        return userServices.createUser(userDto);
+        return userService.createUser(userDto);
     }
     public boolean isAdmin(User user) {
         return user.getRoles().stream()
